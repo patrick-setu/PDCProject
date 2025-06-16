@@ -1,11 +1,11 @@
 ----------------------------------------------------------------
-Mon Jun 16 15:55:12 NZST 2025:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-0197-76e0-79be-000006b89b90 
-on database directory /Users/patrickuni/Documents/AUTAcademicAdvisorGUI/aut_recommendDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@63c12fb0 
+Mon Jun 16 16:49:06 NZST 2025:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-0197-7711-d47a-000006c08888 
+on database directory /Users/patrickuni/Documents/P22_23204917_23211590/AUTAcademicAdvisorGUI/aut_recommendDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@63c12fb0 
 Loaded from file:/Users/patrickuni/.m2/repository/org/apache/derby/derby/10.14.2.0/derby-10.14.2.0.jar
 java.vendor=Eclipse Adoptium
 java.runtime.version=21.0.3+9-LTS
-user.dir=/Users/patrickuni/Documents/AUTAcademicAdvisorGUI
+user.dir=/Users/patrickuni/Documents/P22_23204917_23211590/AUTAcademicAdvisorGUI
 os.name=Mac OS X
 os.arch=aarch64
 os.version=15.3.2
