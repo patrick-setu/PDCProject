@@ -1,0 +1,14 @@
+com/mycompany/autacademicadvisor/DBConnection.class
+com/mycompany/autacademicadvisor/CommunicationStudiesRecommender.class
+com/mycompany/autacademicadvisor/HealthScienceRecommender.class
+com/mycompany/autacademicadvisor/VirtualAcademicAdvisorGUI.class
+com/mycompany/autacademicadvisor/EngineeringRecommender.class
+com/mycompany/autacademicadvisor/VirtualAcademicAdvisor.class
+com/mycompany/autacademicadvisor/DesignRecommender.class
+com/mycompany/autacademicadvisor/AUTAcademicAdvisor.class
+com/mycompany/autacademicadvisor/BaseAdvisor.class
+com/mycompany/autacademicadvisor/ComputerScienceRecommender.class
+com/mycompany/autacademicadvisor/CheckPrerequisite.class
+com/mycompany/autacademicadvisor/BusinessCourseRecommender.class
+com/mycompany/autacademicadvisor/BaseCourseRecommender.class
+com/mycompany/autacademicadvisor/ServiceAuthentication.class
