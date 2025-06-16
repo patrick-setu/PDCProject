@@ -2,8 +2,9 @@ package com.mycompany.autacademicadvisor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
+import java.io.File;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,13 +12,31 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
     private Map<String, BaseCourseRecommender> recommenders;
     private JPanel cards;
     private CardLayout cardLayout;
-    
+    private JLabel statusLabel;
+
+
+    // Purple color scheme
+    private static final Color PURPLE_BG = new Color(108, 59, 122);       // AUT purple multipurpose
+    private static final Color HOVER_GRAY = new Color(220, 220, 220);     // Light gray for hover
+    private static final Color BLACK_TEXT = Color.BLACK;                  // Black text
+    private static final Color WHITE_TEXT = Color.WHITE;                  // White text
+    private static final Color CARD_BG = new Color(245, 245, 245);        // Light gray for card panels
+
     public VirtualAcademicAdvisorGUI() {
         super("Virtual Academic Advisor");
+        setUIFont(new Font("Segoe UI", Font.PLAIN, 14));
         initializeRecommenders();
         setupUI();
     }
-    
+
+    private void setUIFont(Font f) {
+        UIManager.put("Label.font", f);
+        UIManager.put("TextField.font", f);
+        UIManager.put("TextArea.font", f);
+        UIManager.put("ComboBox.font", f);
+        UIManager.put("Button.font", f);
+    }
+
     private void initializeRecommenders() {
         recommenders = new HashMap<>();
         recommenders.put("Computer and Information Sciences", new ComputerScienceRecommender());
@@ -27,151 +46,288 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         recommenders.put("Design", new DesignRecommender());
         recommenders.put("Communication Studies", new CommunicationStudiesRecommender());
     }
+
+    private ImageIcon loadLogo() {
+    try {
+        URL imgURL = getClass().getResource("/p22/autlogo.png"); // Adjust if needed
+        if (imgURL != null) {
+            ImageIcon originalIcon = new ImageIcon(imgURL);
+            Image scaledImage = originalIcon.getImage().getScaledInstance(115, 80, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaledImage);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return null;                                                                                                                        
+}
+
     
+
+
     private void setupUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(900, 650);
+        setMinimumSize(new Dimension(900, 650));
         setLocationRelativeTo(null);
+        getContentPane().setBackground(PURPLE_BG);
+
+        JLabel logoLabel = new JLabel(loadLogo());
+//        logoLabel.setHorizontalAlignment(SwingConstants.CENTER); so that logo is in upper right corner
+//        logoLabel.setVerticalAlignment(SwingConstants.CENTER);
+//        logoLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(108, 59, 122));
+        topPanel.add(logoLabel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
         
+
+        JLabel titleLabel = new JLabel("Virtual Academic Advisor", JLabel.CENTER);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 150, 0, 0));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        titleLabel.setForeground(WHITE_TEXT);
+        topPanel.add(titleLabel, BorderLayout.CENTER);
+
+        statusLabel = new JLabel(" ");
+        statusLabel.setForeground(WHITE_TEXT);
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        add(statusLabel, BorderLayout.SOUTH);  // Show at bottom of window
+
+    
+
         cardLayout = new CardLayout();
         cards = new JPanel(cardLayout);
-        
-        // Create panels for each function
-        JPanel mainMenuPanel = createMainMenuPanel();
-        JPanel courseRecPanel = createCourseRecommendationPanel();
-        JPanel prereqPanel = createPrerequisitePanel();
-        JPanel creditPanel = createCreditSummaryPanel();
-        JPanel tipsPanel = createStudyTipsPanel();
-        
-        cards.add(mainMenuPanel, "MainMenu");
-        cards.add(courseRecPanel, "CourseRecommendations");
-        cards.add(prereqPanel, "Prerequisites");
-        cards.add(creditPanel, "Credits");
-        cards.add(tipsPanel, "StudyTips");
-        
+        cards.setBackground(CARD_BG);
+        cards.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        cards.add(createLoginPanel(), "Login");  // Add login screen first
+        cards.add(createMainMenuPanel(), "MainMenu");
+        cards.add(createCourseRecommendationPanel(), "CourseRecommendations");
+        cards.add(createPrerequisitePanel(), "Prerequisites");
+        cards.add(createCreditSummaryPanel(), "Credits");
+        cards.add(createStudyTipsPanel(), "StudyTips");
+
         add(cards);
-        
-        cardLayout.show(cards, "MainMenu");
+        cardLayout.show(cards, "Login");
     }
     
+    private java.util.List<JButton> menuButtons = new java.util.ArrayList<>();
+
+    private void setButtonsEnabled(boolean enabled) {
+    for (JButton btn : menuButtons) {
+        btn.setEnabled(enabled);
+        btn.setCursor(Cursor.getPredefinedCursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+        }
+    }   
+
+    
+        private void handleButtonClick(JButton button, String message, String cardName) {
+        statusLabel.setText(message);
+
+        // Disable all buttons
+        setButtonsEnabled(false);
+
+        // Simulate 0.25s transition
+        Timer timer = new Timer(250, e -> {
+        cardLayout.show(cards, cardName);
+        statusLabel.setText(" ");
+        setButtonsEnabled(true);
+        });
+        timer.setRepeats(false);
+        timer.start();
+        }
+
+    
     private JPanel createMainMenuPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 20));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        JLabel titleLabel = new JLabel("Virtual Academic Advisor", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+
+
+        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 15, 15));
+        buttonPanel.setBackground(CARD_BG);
+
+        JButton courseRecButton = createPurpleButton("Bachelor's Degree Recommendations");
+        JButton prereqButton = createPurpleButton("Check Prerequisites");
+        JButton creditButton = createPurpleButton("Credit Summary");
+        JButton tipsButton = createPurpleButton("General Study Tips");
+        JButton exitButton = createPurpleButton("Exit");
+
+        // Collect menu buttons for transition disabling
+        menuButtons.add(courseRecButton);
+        menuButtons.add(prereqButton);
+        menuButtons.add(creditButton);
+        menuButtons.add(tipsButton);
+
+
+        courseRecButton.addActionListener(e ->
+        handleButtonClick(courseRecButton, "Loading Bachelor's Degree Recommendations...", "CourseRecommendations"));
+
+        prereqButton.addActionListener(e ->
+        handleButtonClick(prereqButton, "Loading Prerequisite Checker...", "Prerequisites"));
+
+        creditButton.addActionListener(e ->
+        handleButtonClick(creditButton, "Loading Credit Summary...", "Credits"));
+
+        tipsButton.addActionListener(e ->
+        handleButtonClick(tipsButton, "Loading Study Tips...", "StudyTips"));
+
+
+        // Exit
+        exitButton.addActionListener(e -> {
+        statusLabel.setText("Exiting application...");
+        Timer timer = new Timer(1000, evt -> System.exit(0));
+        timer.setRepeats(false);
+        timer.start();
+        });
         
-        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 10, 10));
-        
-        JButton courseRecButton = new JButton("Bachelor's Degree Recommendations");
-        JButton prereqButton = new JButton("Check Prerequisites");
-        JButton creditButton = new JButton("Credit Summary");
-        JButton tipsButton = new JButton("General Study Tips");
-        JButton exitButton = new JButton("Exit");
-        
-        courseRecButton.addActionListener(e -> cardLayout.show(cards, "CourseRecommendations"));
-        prereqButton.addActionListener(e -> cardLayout.show(cards, "Prerequisites"));
-        creditButton.addActionListener(e -> cardLayout.show(cards, "Credits"));
-        tipsButton.addActionListener(e -> cardLayout.show(cards, "StudyTips"));
-        exitButton.addActionListener(e -> System.exit(0));
-        
+        JPanel panel = createStyledPanel("");
+
         buttonPanel.add(courseRecButton);
         buttonPanel.add(prereqButton);
         buttonPanel.add(creditButton);
         buttonPanel.add(tipsButton);
         buttonPanel.add(exitButton);
-        
-        panel.add(titleLabel, BorderLayout.NORTH);
-        panel.add(buttonPanel, BorderLayout.CENTER);
-        
+
+        JPanel paddedButtonPanel = new JPanel(new BorderLayout());
+        paddedButtonPanel.setBackground(CARD_BG);
+        paddedButtonPanel.setBorder(BorderFactory.createEmptyBorder(20, 60, 20, 60));
+        paddedButtonPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        panel.add(paddedButtonPanel, BorderLayout.CENTER);
         return panel;
     }
-    
-    private JPanel createCourseRecommendationPanel() {
+
+    private JButton createPurpleButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setForeground(WHITE_TEXT);
+        button.setBackground(PURPLE_BG);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(PURPLE_BG, 2),
+            BorderFactory.createEmptyBorder(10, 25, 10, 25)
+        ));
+
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent evt) {
+                button.setBackground(HOVER_GRAY);
+                button.setForeground(PURPLE_BG);
+            }
+
+            public void mouseExited(MouseEvent evt) {
+                button.setBackground(PURPLE_BG);
+                button.setForeground(WHITE_TEXT);
+            }
+        });
+        return button;
+    }
+
+    private JPanel createStyledPanel(String title) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JLabel titleLabel = new JLabel("Bachelor's Degree Recommendations", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(CARD_BG);
+
+        if (title != null) {
+            JPanel header = new JPanel(new BorderLayout());
+            header.setBackground(CARD_BG);
+
+            JLabel titleLabel = new JLabel(title, JLabel.CENTER);
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+            titleLabel.setForeground(PURPLE_BG);
+
+            JSeparator separator = new JSeparator();
+            separator.setForeground(PURPLE_BG);
+
+            header.add(titleLabel, BorderLayout.CENTER);
+            // Do not add separator for menu
+            if (title != "") {
+                header.add(separator, BorderLayout.SOUTH);
+            }
+            panel.add(header, BorderLayout.NORTH);
+        }
+
+        return panel;
+    }
+
+    private JPanel createCourseRecommendationPanel() {
+        JPanel panel = createStyledPanel("Bachelor's Degree Recommendations");
+
         JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(CARD_BG);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        // Degree selection
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        formPanel.add(new JLabel("Select Degree:"), gbc);
-        
-        String[] degrees = {"Computer and Information Sciences", "Engineering (Honours)", "Business",
-            "Health Science", "Design", "Communication Studies"};
+
+        JLabel degreeLabel = new JLabel("Select Degree:");
+        degreeLabel.setForeground(BLACK_TEXT);
+        gbc.gridx = 0; gbc.gridy = 0;
+        formPanel.add(degreeLabel, gbc);
+
+        String[] degrees = recommenders.keySet().toArray(new String[0]);
         JComboBox<String> degreeCombo = new JComboBox<>(degrees);
+        degreeCombo.setBackground(Color.WHITE);
+        degreeCombo.setForeground(Color.BLACK);
         gbc.gridx = 1;
         formPanel.add(degreeCombo, gbc);
-        
-        // Major selection
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        formPanel.add(new JLabel("Select Major:"), gbc);
-        
+
+        JLabel majorLabel = new JLabel("Select Major:");
+        majorLabel.setForeground(BLACK_TEXT);
+        gbc.gridx = 0; gbc.gridy = 1;
+        formPanel.add(majorLabel, gbc);
+
         JComboBox<String> majorCombo = new JComboBox<>();
+        majorCombo.setBackground(Color.WHITE);
+        majorCombo.setForeground(BLACK_TEXT);
         gbc.gridx = 1;
         formPanel.add(majorCombo, gbc);
-        
-        // Year selection
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        formPanel.add(new JLabel("Select Year:"), gbc);
-        
-        String[] years = {"1", "2", "3", "4"};
-        JComboBox<String> yearCombo = new JComboBox<>(years);
+
+        JLabel yearLabel = new JLabel("Select Year:");
+        yearLabel.setForeground(BLACK_TEXT);
+        gbc.gridx = 0; gbc.gridy = 2;
+        formPanel.add(yearLabel, gbc);
+
+        JComboBox<String> yearCombo = new JComboBox<>(new String[]{"1", "2", "3", "4"});
+        yearCombo.setBackground(Color.WHITE);
+        yearCombo.setForeground(BLACK_TEXT);
         gbc.gridx = 1;
         formPanel.add(yearCombo, gbc);
-        
-        // Results area
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        
+
         JTextArea resultsArea = new JTextArea(10, 30);
         resultsArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(resultsArea);
-        formPanel.add(scrollPane, gbc);
-        
-        // Buttons
+        resultsArea.setBackground(Color.WHITE);
+        resultsArea.setForeground(BLACK_TEXT);
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
+        gbc.weightx = 1.0; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.BOTH;
+        formPanel.add(new JScrollPane(resultsArea), gbc);
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        
-        JButton recommendButton = new JButton("Get Recommendations");
-        JButton backButton = new JButton("Back to Main Menu");
-        
+        buttonPanel.setBackground(CARD_BG);
+
+        JButton recommendButton = createPurpleButton("Get Recommendations");
+        JButton backButton = createPurpleButton("Back to Main Menu");
+
         recommendButton.addActionListener(e -> {
             String degree = (String) degreeCombo.getSelectedItem();
             String major = (String) majorCombo.getSelectedItem();
             String year = (String) yearCombo.getSelectedItem();
-            
             if (major == null || major.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please select a major", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
             BaseCourseRecommender recommender = recommenders.get(degree);
             if (recommender != null) {
                 resultsArea.setText("");
                 recommender.recommendCourses(major, year, resultsArea);
             }
         });
-        
+
         backButton.addActionListener(e -> cardLayout.show(cards, "MainMenu"));
-        
         buttonPanel.add(recommendButton);
         buttonPanel.add(backButton);
-        
-        // Update majors when degree changes
+
         degreeCombo.addActionListener(e -> {
             String selectedDegree = (String) degreeCombo.getSelectedItem();
             BaseCourseRecommender recommender = recommenders.get(selectedDegree);
@@ -182,90 +338,73 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
                 }
             }
         });
-        
-        // Initialize majors for first degree
-        if (degrees.length > 0) {
-            degreeCombo.setSelectedIndex(0);
-        }
-        
-        panel.add(titleLabel, BorderLayout.NORTH);
+
+        degreeCombo.setSelectedIndex(0);
+        degreeCombo.getActionListeners()[0].actionPerformed(null); // trigger initial major load
+
         panel.add(formPanel, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
         return panel;
     }
-    
+
     private JPanel createPrerequisitePanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JLabel titleLabel = new JLabel("Check Course Prerequisites", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        
+        JPanel panel = createStyledPanel("Check Course Prerequisites");
+
         JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(CARD_BG);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        // Course input
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        formPanel.add(new JLabel("Enter Course Name or Code:"), gbc);
-        
+
+        JLabel courseLabel = new JLabel("Enter Course Name or Code:");
+        courseLabel.setForeground(BLACK_TEXT);
+        gbc.gridx = 0; gbc.gridy = 0;
+        formPanel.add(courseLabel, gbc);
+
         JTextField courseField = new JTextField(20);
+        courseField.setBackground(Color.WHITE);
+        courseField.setForeground(BLACK_TEXT);
         gbc.gridx = 1;
         formPanel.add(courseField, gbc);
-        
-        // Results area
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        
+
         JTextArea resultsArea = new JTextArea(10, 30);
         resultsArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(resultsArea);
-        formPanel.add(scrollPane, gbc);
-        
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        
-        JButton checkButton = new JButton("Check Prerequisites");
-        JButton backButton = new JButton("Back to Main Menu");
-        
+        resultsArea.setBackground(Color.WHITE);
+        resultsArea.setForeground(BLACK_TEXT);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+        gbc.weightx = 1.0; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.BOTH;
+        formPanel.add(new JScrollPane(resultsArea), gbc);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(CARD_BG);
+
+        JButton checkButton = createPurpleButton("Check Prerequisites");
+        JButton backButton = createPurpleButton("Back to Main Menu");
+
         checkButton.addActionListener(e -> {
             String course = courseField.getText().trim().toLowerCase();
             if (course.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please enter a course name or code", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
             String prerequisites = CheckPrerequisite.checkPrerequisites(course);
             resultsArea.setText("Prerequisites for " + course + ":\n" + prerequisites);
         });
-        
+
         backButton.addActionListener(e -> cardLayout.show(cards, "MainMenu"));
-        
+
         buttonPanel.add(checkButton);
         buttonPanel.add(backButton);
-        
-        panel.add(titleLabel, BorderLayout.NORTH);
+
         panel.add(formPanel, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
+
     private JPanel createCreditSummaryPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JLabel titleLabel = new JLabel("Credit Summary", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        
+        JPanel panel = createStyledPanel("Credit Summary");
+
         JTextArea textArea = new JTextArea(
             "Bachelor's Degree Requirements:\n" +
             "- Total Credits: 360\n" +
@@ -275,26 +414,24 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         );
         textArea.setEditable(false);
         textArea.setFont(new Font("Arial", Font.PLAIN, 16));
-        
+        textArea.setBackground(CARD_BG);
+        textArea.setForeground(BLACK_TEXT);
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton backButton = new JButton("Back to Main Menu");
+        buttonPanel.setBackground(CARD_BG);
+        JButton backButton = createPurpleButton("Back to Main Menu");
         backButton.addActionListener(e -> cardLayout.show(cards, "MainMenu"));
         buttonPanel.add(backButton);
-        
-        panel.add(titleLabel, BorderLayout.NORTH);
+
         panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
-    
+
     private JPanel createStudyTipsPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JLabel titleLabel = new JLabel("General Study Tips", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        
+        JPanel panel = createStyledPanel("General Study Tips");
+
         JTextArea textArea = new JTextArea(
             "1. Attend all lectures and tutorials\n" +
             "2. Create a study schedule for each semester\n" +
@@ -304,19 +441,76 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         );
         textArea.setEditable(false);
         textArea.setFont(new Font("Arial", Font.PLAIN, 16));
-        
+        textArea.setBackground(CARD_BG);
+        textArea.setForeground(BLACK_TEXT);
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton backButton = new JButton("Back to Main Menu");
+        buttonPanel.setBackground(CARD_BG);
+        JButton backButton = createPurpleButton("Back to Main Menu");
         backButton.addActionListener(e -> cardLayout.show(cards, "MainMenu"));
         buttonPanel.add(backButton);
-        
-        panel.add(titleLabel, BorderLayout.NORTH);
+
         panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
     
+    private JPanel createLoginPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBackground(CARD_BG);
+    panel.setBorder(BorderFactory.createLineBorder(PURPLE_BG, 2));
+
+    JPanel loginPanel = new JPanel(new BorderLayout(10, 10));
+    loginPanel.setBackground(CARD_BG);
+    loginPanel.setBorder(BorderFactory.createEmptyBorder(80, 60, 80, 60));
+
+    JTextField usernameField = new JTextField();
+    usernameField.setPreferredSize(new Dimension(200, 30));
+    usernameField.setBorder(BorderFactory.createTitledBorder("Username"));
+    loginPanel.add(usernameField, BorderLayout.NORTH);
+
+    JPasswordField passwordField = new JPasswordField();
+    passwordField.setPreferredSize(new Dimension(200, 30));
+    passwordField.setMinimumSize(new Dimension(200, 30));
+    passwordField.setMaximumSize(new Dimension(200, 30));
+    passwordField.setBorder(BorderFactory.createTitledBorder("Password"));
+    loginPanel.add(passwordField, BorderLayout.CENTER);
+
+    JLabel errorLabel = new JLabel("Invalid username or password");
+    errorLabel.setForeground(Color.RED);
+    errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    errorLabel.setVisible(false);
+    loginPanel.add(errorLabel, BorderLayout.SOUTH);
+
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    buttonPanel.setBackground(CARD_BG);
+    JButton loginButton = createPurpleButton("Login");
+    loginButton.setFont(new Font("Arial", Font.BOLD, 16));
+
+    // Dummy authentication
+    loginButton.addActionListener(e -> {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if ("student".equalsIgnoreCase(username) && "pass123".equals(password)) {
+            errorLabel.setVisible(false);
+            cardLayout.show(cards, "MainMenu");
+        } else {
+            errorLabel.setVisible(true);
+        }
+    });
+
+    buttonPanel.add(loginButton);
+
+    // Add login panel to center and button panel to south
+    panel.add(loginPanel, BorderLayout.CENTER);
+    panel.add(buttonPanel, BorderLayout.SOUTH);
+
+    return panel;
+}
+
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             VirtualAcademicAdvisorGUI advisor = new VirtualAcademicAdvisorGUI();
