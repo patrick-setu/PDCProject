@@ -11,11 +11,11 @@ import java.util.Map;
 import java.sql.*;
 
 public class VirtualAcademicAdvisorGUI extends JFrame {
+
     private Map<String, BaseCourseRecommender> recommenders;
     private JPanel cards;
     private CardLayout cardLayout;
     private JLabel statusLabel;
-
 
     // Purple color scheme
     private static final Color PURPLE_BG = new Color(108, 59, 122);       // AUT purple multipurpose
@@ -29,6 +29,21 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         setUIFont(new Font("Segoe UI", Font.PLAIN, 14));
         initializeRecommenders();
         setupUI();
+        establishDatabaseConnection();
+    }
+
+    private void establishDatabaseConnection() {
+        try {
+            String URL = "jdbc:derby:aut_recommend;create=true";
+            Connection conn = DriverManager.getConnection(URL);
+            if (conn != null) {
+                System.out.println("Connected to the embedded database successfully.");
+                conn.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void setUIFont(Font f) {
@@ -50,21 +65,18 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
     }
 
     private ImageIcon loadLogo() {
-    try {
-        URL imgURL = getClass().getResource("/p22/autlogo.png"); // Adjust if needed
-        if (imgURL != null) {
-            ImageIcon originalIcon = new ImageIcon(imgURL);
-            Image scaledImage = originalIcon.getImage().getScaledInstance(115, 80, Image.SCALE_SMOOTH);
-            return new ImageIcon(scaledImage);
+        try {
+            URL imgURL = getClass().getResource("/autlogo.png"); // Adjust if needed
+            if (imgURL != null) {
+                ImageIcon originalIcon = new ImageIcon(imgURL);
+                Image scaledImage = originalIcon.getImage().getScaledInstance(115, 80, Image.SCALE_SMOOTH);
+                return new ImageIcon(scaledImage);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;                                                                                                                        
-}
-
-    
-
 
     private void setupUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -83,7 +95,6 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         topPanel.add(logoLabel, BorderLayout.EAST);
 
         add(topPanel, BorderLayout.NORTH);
-        
 
         JLabel titleLabel = new JLabel("Virtual Academic Advisor", JLabel.CENTER);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 150, 0, 0));
@@ -97,14 +108,13 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         statusLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
         add(statusLabel, BorderLayout.SOUTH);  // Show at bottom of window
 
-    
-
         cardLayout = new CardLayout();
         cards = new JPanel(cardLayout);
         cards.setBackground(CARD_BG);
         cards.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        cards.add(createLoginPanel(), "Login");  // Add login screen first
+        cards.add(createSignUpPanel(), "SignUp");
+        cards.add(createLoginPanel(), "Login");
         cards.add(createMainMenuPanel(), "MainMenu");
         cards.add(createCourseRecommendationPanel(), "CourseRecommendations");
         cards.add(createPrerequisitePanel(), "Prerequisites");
@@ -112,20 +122,19 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         cards.add(createStudyTipsPanel(), "StudyTips");
 
         add(cards);
-        cardLayout.show(cards, "Login");
+        cardLayout.show(cards, "SignUp");
     }
-    
+
     private java.util.List<JButton> menuButtons = new java.util.ArrayList<>();
 
     private void setButtonsEnabled(boolean enabled) {
-    for (JButton btn : menuButtons) {
-        btn.setEnabled(enabled);
-        btn.setCursor(Cursor.getPredefinedCursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+        for (JButton btn : menuButtons) {
+            btn.setEnabled(enabled);
+            btn.setCursor(Cursor.getPredefinedCursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
         }
-    }   
+    }
 
-    
-        private void handleButtonClick(JButton button, String message, String cardName) {
+    private void handleButtonClick(JButton button, String message, String cardName) {
         statusLabel.setText(message);
 
         // Disable all buttons
@@ -133,18 +142,15 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
 
         // Simulate 0.25s transition
         Timer timer = new Timer(250, e -> {
-        cardLayout.show(cards, cardName);
-        statusLabel.setText(" ");
-        setButtonsEnabled(true);
+            cardLayout.show(cards, cardName);
+            statusLabel.setText(" ");
+            setButtonsEnabled(true);
         });
         timer.setRepeats(false);
         timer.start();
-        }
+    }
 
-    
     private JPanel createMainMenuPanel() {
-        
-
 
         JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 15, 15));
         buttonPanel.setBackground(CARD_BG);
@@ -161,28 +167,26 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         menuButtons.add(creditButton);
         menuButtons.add(tipsButton);
 
+        courseRecButton.addActionListener(e
+                -> handleButtonClick(courseRecButton, "Loading Bachelor's Degree Recommendations...", "CourseRecommendations"));
 
-        courseRecButton.addActionListener(e ->
-        handleButtonClick(courseRecButton, "Loading Bachelor's Degree Recommendations...", "CourseRecommendations"));
+        prereqButton.addActionListener(e
+                -> handleButtonClick(prereqButton, "Loading Prerequisite Checker...", "Prerequisites"));
 
-        prereqButton.addActionListener(e ->
-        handleButtonClick(prereqButton, "Loading Prerequisite Checker...", "Prerequisites"));
+        creditButton.addActionListener(e
+                -> handleButtonClick(creditButton, "Loading Credit Summary...", "Credits"));
 
-        creditButton.addActionListener(e ->
-        handleButtonClick(creditButton, "Loading Credit Summary...", "Credits"));
-
-        tipsButton.addActionListener(e ->
-        handleButtonClick(tipsButton, "Loading Study Tips...", "StudyTips"));
-
+        tipsButton.addActionListener(e
+                -> handleButtonClick(tipsButton, "Loading Study Tips...", "StudyTips"));
 
         // Exit
         exitButton.addActionListener(e -> {
-        statusLabel.setText("Exiting application...");
-        Timer timer = new Timer(1000, evt -> System.exit(0));
-        timer.setRepeats(false);
-        timer.start();
+            statusLabel.setText("Exiting application...");
+            Timer timer = new Timer(1000, evt -> System.exit(0));
+            timer.setRepeats(false);
+            timer.start();
         });
-        
+
         JPanel panel = createStyledPanel("");
 
         buttonPanel.add(courseRecButton);
@@ -208,8 +212,8 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         button.setFocusPainted(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(PURPLE_BG, 2),
-            BorderFactory.createEmptyBorder(10, 25, 10, 25)
+                BorderFactory.createLineBorder(PURPLE_BG, 2),
+                BorderFactory.createEmptyBorder(10, 25, 10, 25)
         ));
 
         button.addMouseListener(new MouseAdapter() {
@@ -265,7 +269,8 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
 
         JLabel degreeLabel = new JLabel("Select Degree:");
         degreeLabel.setForeground(BLACK_TEXT);
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         formPanel.add(degreeLabel, gbc);
 
         String[] degrees = recommenders.keySet().toArray(new String[0]);
@@ -277,7 +282,8 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
 
         JLabel majorLabel = new JLabel("Select Major:");
         majorLabel.setForeground(BLACK_TEXT);
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         formPanel.add(majorLabel, gbc);
 
         JComboBox<String> majorCombo = new JComboBox<>();
@@ -288,7 +294,8 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
 
         JLabel yearLabel = new JLabel("Select Year:");
         yearLabel.setForeground(BLACK_TEXT);
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         formPanel.add(yearLabel, gbc);
 
         JComboBox<String> yearCombo = new JComboBox<>(new String[]{"1", "2", "3", "4"});
@@ -301,8 +308,12 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         resultsArea.setEditable(false);
         resultsArea.setBackground(Color.WHITE);
         resultsArea.setForeground(BLACK_TEXT);
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
-        gbc.weightx = 1.0; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
         formPanel.add(new JScrollPane(resultsArea), gbc);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
@@ -360,7 +371,8 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
 
         JLabel courseLabel = new JLabel("Enter Course Name or Code:");
         courseLabel.setForeground(BLACK_TEXT);
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         formPanel.add(courseLabel, gbc);
 
         JTextField courseField = new JTextField(20);
@@ -373,8 +385,12 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         resultsArea.setEditable(false);
         resultsArea.setBackground(Color.WHITE);
         resultsArea.setForeground(BLACK_TEXT);
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
-        gbc.weightx = 1.0; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
         formPanel.add(new JScrollPane(resultsArea), gbc);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -408,11 +424,11 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         JPanel panel = createStyledPanel("Credit Summary");
 
         JTextArea textArea = new JTextArea(
-            "Bachelor's Degree Requirements:\n" +
-            "- Total Credits: 360\n" +
-            "- Core Courses: 240 credits\n" +
-            "- Electives: 90 credits\n" +
-            "- General Education: 30 credits\n"
+                "Bachelor's Degree Requirements:\n"
+                + "- Total Credits: 360\n"
+                + "- Core Courses: 240 credits\n"
+                + "- Electives: 90 credits\n"
+                + "- General Education: 30 credits\n"
         );
         textArea.setEditable(false);
         textArea.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -435,11 +451,11 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         JPanel panel = createStyledPanel("General Study Tips");
 
         JTextArea textArea = new JTextArea(
-            "1. Attend all lectures and tutorials\n" +
-            "2. Create a study schedule for each semester\n" +
-            "3. Utilize AUT's learning support services\n" +
-            "4. Form study groups with classmates\n" +
-            "5. Start assignments early and review marking criteria\n"
+                "1. Attend all lectures and tutorials\n"
+                + "2. Create a study schedule for each semester\n"
+                + "3. Utilize AUT's learning support services\n"
+                + "4. Form study groups with classmates\n"
+                + "5. Start assignments early and review marking criteria\n"
         );
         textArea.setEditable(false);
         textArea.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -457,26 +473,108 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
 
         return panel;
     }
-    
+
     private JPanel createLoginPanel() {
-    // Main panel with border
+        // Main panel with border
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(CARD_BG);
+        mainPanel.setBorder(BorderFactory.createLineBorder(PURPLE_BG, 2));
+
+        // Center container to hold all components vertically centered
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBackground(CARD_BG);
+
+        // Add vertical glue to push content to center
+        centerPanel.add(Box.createVerticalGlue());
+
+        // Field dimensions
+        int fieldHeight = 43;
+        Dimension fieldSize = new Dimension(250, fieldHeight);
+
+        // Username Field
+        JTextField usernameField = new JTextField();
+        usernameField.setBorder(BorderFactory.createTitledBorder("Username"));
+        usernameField.setPreferredSize(fieldSize);
+        usernameField.setMaximumSize(fieldSize);
+        usernameField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centerPanel.add(usernameField);
+
+        // Space between fields (15px)
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        // Password Field
+        JPasswordField passwordField = new JPasswordField();
+        passwordField.setBorder(BorderFactory.createTitledBorder("Password"));
+        passwordField.setPreferredSize(fieldSize);
+        passwordField.setMaximumSize(fieldSize);
+        passwordField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centerPanel.add(passwordField);
+
+        // Space before button (20px)
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Login Button
+        JButton loginButton = createPurpleButton("Login");
+        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centerPanel.add(loginButton);
+        
+        JButton signUpNavButton = createPurpleButton("Create Account");
+        signUpNavButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centerPanel.add(signUpNavButton);
+
+        signUpNavButton.addActionListener(e -> cardLayout.show(cards, "SignUp"));
+
+
+        // Add vertical glue to complete centering
+        centerPanel.add(Box.createVerticalGlue());
+
+        // Add some padding around the entire form
+        JPanel paddedPanel = new JPanel(new BorderLayout());
+        paddedPanel.setBackground(CARD_BG);
+        paddedPanel.setBorder(BorderFactory.createEmptyBorder(20, 60, 20, 60));
+        paddedPanel.add(centerPanel, BorderLayout.CENTER);
+
+        loginButton.addActionListener(e -> {
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword());
+
+            try {
+                // Updated connection details to match YOUR database
+                if (authenticateWithDatabase(username, password)) {
+                    cardLayout.show(cards, "MainMenu");
+                } else {
+                    JOptionPane.showMessageDialog(mainPanel,
+                            "Invalid username or password",
+                            "Login Failed",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(mainPanel,
+                        "Database error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        mainPanel.add(paddedPanel, BorderLayout.CENTER);
+        return mainPanel;
+    }
+    
+    private JPanel createSignUpPanel() {
     JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.setBackground(CARD_BG);
     mainPanel.setBorder(BorderFactory.createLineBorder(PURPLE_BG, 2));
 
-    // Center container to hold all components vertically centered
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
     centerPanel.setBackground(CARD_BG);
-    
-    // Add vertical glue to push content to center
+
     centerPanel.add(Box.createVerticalGlue());
 
-    // Field dimensions
     int fieldHeight = 43;
     Dimension fieldSize = new Dimension(250, fieldHeight);
 
-    // Username Field
     JTextField usernameField = new JTextField();
     usernameField.setBorder(BorderFactory.createTitledBorder("Username"));
     usernameField.setPreferredSize(fieldSize);
@@ -484,10 +582,8 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
     usernameField.setAlignmentX(Component.CENTER_ALIGNMENT);
     centerPanel.add(usernameField);
 
-    // Space between fields (15px)
     centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-    // Password Field
     JPasswordField passwordField = new JPasswordField();
     passwordField.setBorder(BorderFactory.createTitledBorder("Password"));
     passwordField.setPreferredSize(fieldSize);
@@ -495,93 +591,152 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
     passwordField.setAlignmentX(Component.CENTER_ALIGNMENT);
     centerPanel.add(passwordField);
 
-    // Space before button (20px)
+    centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+    JPasswordField confirmPasswordField = new JPasswordField();
+    confirmPasswordField.setBorder(BorderFactory.createTitledBorder("Confirm Password"));
+    confirmPasswordField.setPreferredSize(fieldSize);
+    confirmPasswordField.setMaximumSize(fieldSize);
+    confirmPasswordField.setAlignmentX(Component.CENTER_ALIGNMENT);
+    centerPanel.add(confirmPasswordField);
+
     centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-    // Login Button
-    JButton loginButton = createPurpleButton("Login");
-    loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-    centerPanel.add(loginButton);
+    JButton signUpButton = createPurpleButton("Sign Up");
+    signUpButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    centerPanel.add(signUpButton);
 
-    // Add vertical glue to complete centering
+    centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+    JButton goToLoginButton = createPurpleButton("Already have an account? Login");
+    goToLoginButton.setFont(new Font("Arial", Font.PLAIN, 14));
+    goToLoginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    centerPanel.add(goToLoginButton);
+
     centerPanel.add(Box.createVerticalGlue());
 
-    // Add some padding around the entire form
     JPanel paddedPanel = new JPanel(new BorderLayout());
     paddedPanel.setBackground(CARD_BG);
     paddedPanel.setBorder(BorderFactory.createEmptyBorder(20, 60, 20, 60));
     paddedPanel.add(centerPanel, BorderLayout.CENTER);
 
-    loginButton.addActionListener(e -> {
+    signUpButton.addActionListener(e -> {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
+        String confirmPassword = new String(confirmPasswordField.getPassword());
 
-        try {
-            // Updated connection details to match YOUR database
-            if (authenticateWithDatabase(username, password)) {
-                cardLayout.show(cards, "MainMenu");
-            } else {
-                JOptionPane.showMessageDialog(mainPanel,
-                    "Invalid username or password",
-                    "Login Failed",
-                    JOptionPane.ERROR_MESSAGE);
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(mainPanel, "Please fill out all fields.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(mainPanel, "Passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (Connection conn = DriverManager.getConnection("jdbc:derby:aut_recommend;create=true")) {
+            String checkSql = "SELECT username FROM users WHERE username = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                checkStmt.setString(1, username);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    JOptionPane.showMessageDialog(mainPanel, "Username already exists.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
             }
+
+            String insertSql = "INSERT INTO users (username, password) VALUES (?, ?)";
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                insertStmt.setString(1, username);
+                insertStmt.setString(2, password);
+                insertStmt.executeUpdate();
+                JOptionPane.showMessageDialog(mainPanel, "Account created! Please log in.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                cardLayout.show(cards, "Login");
+            }
+
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(mainPanel,
-                "Database error: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(mainPanel, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     });
+
+    goToLoginButton.addActionListener(e -> cardLayout.show(cards, "Login"));
 
     mainPanel.add(paddedPanel, BorderLayout.CENTER);
     return mainPanel;
 }
 
 // Database authentication methods
-private boolean authenticateWithDatabase(String username, String password) throws SQLException {
-    
-    
-    String sql = "SELECT password FROM users WHERE username = ?";
-    
-    // CHANGED to your database name and credentials
-    try (Connection conn = DriverManager.getConnection(
-            "jdbc:derby://localhost:1527/aut_recommendation", 
-            "student", 
-            "pass123");
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-        
-        stmt.setString(1, username);
-        ResultSet rs = stmt.executeQuery();
-        
-        if (rs.next()) {
-            String dbPassword = rs.getString("password");
-            return password.equals(dbPassword);
-        }
-        return false;
-    }
-}
+    private boolean authenticateWithDatabase(String username, String password) throws SQLException {
 
-private String getUserRoleFromDatabase(String username) throws SQLException {
-    String sql = "SELECT role FROM users WHERE username = ?";
-    
-    try (Connection conn = DriverManager.getConnection("jdbc:derby://localhost:1527/aut_recommendation", "student", "pass123");
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-        
-        stmt.setString(1, username);
-        ResultSet rs = stmt.executeQuery();
-        
-        if (rs.next()) {
-            return rs.getString("role");
-        }
-        return "unknown";
-    }
-}
+        String sql = "SELECT password FROM users WHERE username = ?";
 
+        // CHANGED to your database name and credentials
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:derby:aut_recommend;create=true"
+        ); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String dbPassword = rs.getString("password");
+                return password.equals(dbPassword);
+            }
+            return false;
+        }
+    }
+
+    private void initializeDatabase() {
+        String createTableSQL = """
+        CREATE TABLE users (
+            username VARCHAR(50) PRIMARY KEY,
+            password VARCHAR(256)
+        )
+    """;
+
+        String checkTableSQL = "SELECT COUNT(*) FROM users";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:derby:aut_recommend;create=true")) {
+            // Try creating the table
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(createTableSQL);
+                System.out.println("Created 'users' table.");
+            } catch (SQLException e) {
+                if (e.getSQLState().equals("X0Y32")) {
+                    // Table already exists
+                    System.out.println("'users' table already exists.");
+                } else {
+                    throw e;
+                }
+            }
+
+            // Check if there are any users; insert default admin if not
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(checkTableSQL)) {
+
+                if (rs.next() && rs.getInt(1) == 0) {
+                    String insertUserSQL = """
+                    INSERT INTO users (username, password)
+                    VALUES ('admin', 'admin123')
+                """;
+                    stmt.executeUpdate(insertUserSQL);
+                    System.out.println("Inserted default admin user.");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,
+                    "Database initialization failed: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             VirtualAcademicAdvisorGUI advisor = new VirtualAcademicAdvisorGUI();
+            advisor.initializeDatabase();
             advisor.setVisible(true);
         });
     }
