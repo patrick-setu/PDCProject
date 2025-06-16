@@ -1,12 +1,14 @@
 package com.mycompany.autacademicadvisor;
 
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.sql.*;
 
 public class VirtualAcademicAdvisorGUI extends JFrame {
     private Map<String, BaseCourseRecommender> recommenders;
@@ -457,57 +459,123 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
     }
     
     private JPanel createLoginPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBackground(CARD_BG);
-    panel.setBorder(BorderFactory.createLineBorder(PURPLE_BG, 2));
+    // Main panel with border
+    JPanel mainPanel = new JPanel(new BorderLayout());
+    mainPanel.setBackground(CARD_BG);
+    mainPanel.setBorder(BorderFactory.createLineBorder(PURPLE_BG, 2));
 
-    JPanel loginPanel = new JPanel(new BorderLayout(10, 10));
-    loginPanel.setBackground(CARD_BG);
-    loginPanel.setBorder(BorderFactory.createEmptyBorder(80, 60, 80, 60));
+    // Center container to hold all components vertically centered
+    JPanel centerPanel = new JPanel();
+    centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+    centerPanel.setBackground(CARD_BG);
+    
+    // Add vertical glue to push content to center
+    centerPanel.add(Box.createVerticalGlue());
 
+    // Field dimensions
+    int fieldHeight = 43;
+    Dimension fieldSize = new Dimension(250, fieldHeight);
+
+    // Username Field
     JTextField usernameField = new JTextField();
-    usernameField.setPreferredSize(new Dimension(200, 30));
     usernameField.setBorder(BorderFactory.createTitledBorder("Username"));
-    loginPanel.add(usernameField, BorderLayout.NORTH);
+    usernameField.setPreferredSize(fieldSize);
+    usernameField.setMaximumSize(fieldSize);
+    usernameField.setAlignmentX(Component.CENTER_ALIGNMENT);
+    centerPanel.add(usernameField);
 
+    // Space between fields (15px)
+    centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+    // Password Field
     JPasswordField passwordField = new JPasswordField();
-    passwordField.setPreferredSize(new Dimension(200, 30));
-    passwordField.setMinimumSize(new Dimension(200, 30));
-    passwordField.setMaximumSize(new Dimension(200, 30));
     passwordField.setBorder(BorderFactory.createTitledBorder("Password"));
-    loginPanel.add(passwordField, BorderLayout.CENTER);
+    passwordField.setPreferredSize(fieldSize);
+    passwordField.setMaximumSize(fieldSize);
+    passwordField.setAlignmentX(Component.CENTER_ALIGNMENT);
+    centerPanel.add(passwordField);
 
-    JLabel errorLabel = new JLabel("Invalid username or password");
-    errorLabel.setForeground(Color.RED);
-    errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    errorLabel.setVisible(false);
-    loginPanel.add(errorLabel, BorderLayout.SOUTH);
+    // Space before button (20px)
+    centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    buttonPanel.setBackground(CARD_BG);
+    // Login Button
     JButton loginButton = createPurpleButton("Login");
-    loginButton.setFont(new Font("Arial", Font.BOLD, 16));
+    loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    centerPanel.add(loginButton);
 
-    // Dummy authentication
+    // Add vertical glue to complete centering
+    centerPanel.add(Box.createVerticalGlue());
+
+    // Add some padding around the entire form
+    JPanel paddedPanel = new JPanel(new BorderLayout());
+    paddedPanel.setBackground(CARD_BG);
+    paddedPanel.setBorder(BorderFactory.createEmptyBorder(20, 60, 20, 60));
+    paddedPanel.add(centerPanel, BorderLayout.CENTER);
+
     loginButton.addActionListener(e -> {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
 
-        if ("student".equalsIgnoreCase(username) && "pass123".equals(password)) {
-            errorLabel.setVisible(false);
-            cardLayout.show(cards, "MainMenu");
-        } else {
-            errorLabel.setVisible(true);
+        try {
+            // Updated connection details to match YOUR database
+            if (authenticateWithDatabase(username, password)) {
+                cardLayout.show(cards, "MainMenu");
+            } else {
+                JOptionPane.showMessageDialog(mainPanel,
+                    "Invalid username or password",
+                    "Login Failed",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(mainPanel,
+                "Database error: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
         }
     });
 
-    buttonPanel.add(loginButton);
+    mainPanel.add(paddedPanel, BorderLayout.CENTER);
+    return mainPanel;
+}
 
-    // Add login panel to center and button panel to south
-    panel.add(loginPanel, BorderLayout.CENTER);
-    panel.add(buttonPanel, BorderLayout.SOUTH);
+// Database authentication methods
+private boolean authenticateWithDatabase(String username, String password) throws SQLException {
+    
+    
+    String sql = "SELECT password FROM users WHERE username = ?";
+    
+    // CHANGED to your database name and credentials
+    try (Connection conn = DriverManager.getConnection(
+            "jdbc:derby://localhost:1527/aut_recommendation", 
+            "student", 
+            "pass123");
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+        stmt.setString(1, username);
+        ResultSet rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            String dbPassword = rs.getString("password");
+            return password.equals(dbPassword);
+        }
+        return false;
+    }
+}
 
-    return panel;
+private String getUserRoleFromDatabase(String username) throws SQLException {
+    String sql = "SELECT role FROM users WHERE username = ?";
+    
+    try (Connection conn = DriverManager.getConnection("jdbc:derby://localhost:1527/aut_recommendation", "student", "pass123");
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+        stmt.setString(1, username);
+        ResultSet rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            return rs.getString("role");
+        }
+        return "unknown";
+    }
 }
 
 
@@ -518,3 +586,4 @@ public class VirtualAcademicAdvisorGUI extends JFrame {
         });
     }
 }
+

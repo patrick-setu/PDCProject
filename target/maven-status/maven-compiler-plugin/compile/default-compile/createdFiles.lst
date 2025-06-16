@@ -4,6 +4,7 @@ com/mycompany/autacademicadvisor/HealthScienceRecommender.class
 com/mycompany/autacademicadvisor/VirtualAcademicAdvisorGUI.class
 com/mycompany/autacademicadvisor/EngineeringRecommender.class
 com/mycompany/autacademicadvisor/VirtualAcademicAdvisor.class
+com/mycompany/autacademicadvisor/VirtualAcademicAdvisorGUI$1.class
 com/mycompany/autacademicadvisor/DesignRecommender.class
 com/mycompany/autacademicadvisor/AUTAcademicAdvisor.class
 com/mycompany/autacademicadvisor/BaseAdvisor.class
